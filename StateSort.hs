@@ -45,3 +45,5 @@ myFunct t = do
 -- ([],*** Exception: Prelude.minimum: empty list
 -- λ runState (myFunct []) Nothing
 -- ([],Nothing)
+
+main = print $ last . fst $ myFunct' [1..5 * 10 ^ 4]
