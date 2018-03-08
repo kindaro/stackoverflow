@@ -45,3 +45,17 @@ myFunct t = do
 -- ([],*** Exception: Prelude.minimum: empty list
 -- λ runState (myFunct []) Nothing
 -- ([],Nothing)
+
+reverseAndMinimum :: Ord a => [a] -> ([a], Maybe a)
+reverseAndMinimum xs = runState (reverseAndMinimum' xs) Nothing
+
+reverseAndMinimum' :: Ord a => [a] -> State (Maybe a) [a]
+reverseAndMinimum' [ ] = return [ ]
+reverseAndMinimum' (x:xs) = do
+    smallestSoFar <- get
+    case smallestSoFar of
+        Nothing -> put $ Just x
+        Just y  -> when
+                    (x < y)
+                    (put $ Just x)
+    fmap (++ [x]) (reverseAndMinimum' xs)
