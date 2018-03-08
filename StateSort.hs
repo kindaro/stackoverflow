@@ -64,4 +64,4 @@ reverseAndMinimum' (x:xs) = do
 -- λ reverseAndMinimum [2,1,2,3]
 -- ([3,2,1,2],Just 1)
 
-main = print $ last . fst $ reverseAndMinimum [1..1000000]
+main = print $ last . fst $ reverseAndMinimum [1..5 * 10^4]
