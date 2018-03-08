@@ -47,10 +47,11 @@ myFunct t = do
 -- ([],Nothing)
 
 reverseAndMinimum :: Ord a => [a] -> ([a], Maybe a)
-reverseAndMinimum xs = runState (reverseAndMinimum' xs) Nothing
+reverseAndMinimum xs = let (reversed', smallest) = runState (reverseAndMinimum' xs) Nothing
+                       in  (reversed' [ ], smallest)
 
-reverseAndMinimum' :: Ord a => [a] -> State (Maybe a) [a]
-reverseAndMinimum' [ ] = return [ ]
+reverseAndMinimum' :: Ord a => [a] -> State (Maybe a) ([a] -> [a])
+reverseAndMinimum' [ ] = return id
 reverseAndMinimum' (x:xs) = do
     smallestSoFar <- get
     case smallestSoFar of
@@ -58,4 +59,7 @@ reverseAndMinimum' (x:xs) = do
         Just y  -> when
                     (x < y)
                     (put $ Just x)
-    fmap (++ [x]) (reverseAndMinimum' xs)
+    fmap (. (x:)) (reverseAndMinimum' xs)
+
+-- λ reverseAndMinimum [2,1,2,3]
+-- ([3,2,1,2],Just 1)
