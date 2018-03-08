@@ -59,3 +59,8 @@ reverseAndMinimum' (x:xs) = do
                     (x < y)
                     (put $ Just x)
     fmap (++ [x]) (reverseAndMinimum' xs)
+
+-- λ reverseAndMinimum [2,1,2,3]
+-- ([3,2,1,2],Just 1)
+
+main = print $ last . fst $ reverseAndMinimum [1..1000000]
