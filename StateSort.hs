@@ -3,6 +3,7 @@ module StateSort where
 -- stackoverflow.com/q/49164810
 
 import Control.Monad.State
+import System.Environment
 
 myFunct' :: Ord a => [a] -> ([a], a)
 myFunct' xs = (reverse xs, minimum xs)
@@ -64,4 +65,6 @@ reverseAndMinimum' (x:xs) = do
 -- λ reverseAndMinimum [2,1,2,3]
 -- ([3,2,1,2],Just 1)
 
-main = print $ last . fst $ reverseAndMinimum [1..5 * 10^4]
+main = do
+    top <- (read :: String -> Int) . (!! 0) <$> getArgs
+    print $ last . fst $ reverseAndMinimum [1..top]
