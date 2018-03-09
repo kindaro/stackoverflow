@@ -2,8 +2,10 @@ module StateSort where
 
 -- stackoverflow.com/q/49164810
 
-import Control.Monad.State
+import Control.Monad.State.Strict
 import System.Environment
+import Control.DeepSeq
+import Control.Exception
 
 myFunct' :: Ord a => [a] -> ([a], a)
 myFunct' xs = (reverse xs, minimum xs)
@@ -37,6 +39,8 @@ myFunct t = do
         put (Just a)
         return s
 
+runMyFunct xs = runState (myFunct xs) Nothing
+
 -- λ runState (myFunct [1,2,3]) (Just (-100))
 -- ([3,2,1],Just 1)
 -- λ runState (myFunct []) (Just (-100))
@@ -48,23 +52,40 @@ myFunct t = do
 -- ([],Nothing)
 
 reverseAndMinimum :: Ord a => [a] -> ([a], Maybe a)
-reverseAndMinimum xs = let (reversed', smallest) = runState (reverseAndMinimum' xs) Nothing
-                       in  (reversed' [ ], smallest)
+reverseAndMinimum xs = runState (reverseAndMinimum' xs [ ]) Nothing
 
-reverseAndMinimum' :: Ord a => [a] -> State (Maybe a) ([a] -> [a])
-reverseAndMinimum' [ ] = return id
-reverseAndMinimum' (x:xs) = do
-    smallestSoFar <- get
-    case smallestSoFar of
-        Nothing -> put $ Just x
-        Just y  -> when
-                    (x < y)
-                    (put $ Just x)
-    fmap (. (x:)) (reverseAndMinimum' xs)
+reverseAndMinimum' :: Ord a => [a] -> [a] -> State (Maybe a) [a]
+reverseAndMinimum' [ ] res = return res
+reverseAndMinimum' (x:xs) res = do
+        smallestSoFar <- get
+        case smallestSoFar of
+            Nothing -> put $ Just x
+            Just y  -> when (x < y) (put $ Just x)
+        reverseAndMinimum' xs (x: res)
+
+reverseAndMinimum_simple :: Ord a => [a] -> [a] -> State a [a]
+reverseAndMinimum_simple [ ] res = return res
+reverseAndMinimum_simple (x:xs) res = do
+        smallestSoFar <- get
+        when (x < smallestSoFar) (put x)
+        reverseAndMinimum_simple xs (x: res)
+
+runSimple :: Ord a => [a] -> ([a], a)
+runSimple [ ] = error "StateSort.runSimple: This branch is unreachable."
+runSimple xs@(x:_) = runState (reverseAndMinimum_simple xs [ ]) x
+
+reverse' :: Ord a => [a] -> State () ([a] -> [a])
+reverse' [ ] = return id
+reverse' (x:xs) = do
+    fmap (. (x:)) (reverse' xs)
+
+runReverse' xs = let (reversed_dlist, smallest) = runState (reverse' xs) ()
+                in  (reversed_dlist [ ], smallest)
 
 -- λ reverseAndMinimum [2,1,2,3]
 -- ([3,2,1,2],Just 1)
 
 main = do
     top <- (read :: String -> Int) . (!! 0) <$> getArgs
-    print $ last . fst $ reverseAndMinimum [1..top]
+    val <- evaluate . force $ reverseAndMinimum (take top [top, top - 1.. 1 :: Int])
+    print $ (\x -> (last . fst $ x, snd x)) $ val
