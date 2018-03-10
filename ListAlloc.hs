@@ -4,5 +4,5 @@ module ListAlloc where
 import Data.IntSet
 main = do
    print $ size
-         $ fromAscList
-         $ [1..1000]
+         $ {-# SCC "fromDistinctAscList" #-} fromDistinctAscList
+         $ {-# SCC "generate_list" #-} [1::Int .. 10^7]
