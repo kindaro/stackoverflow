@@ -4,11 +4,9 @@ module SplitSubstr where
 
 import System.Environment (getArgs)
 
-import Data.List
-import Data.Maybe
-
-import Data.Algorithms.KMP
-import Data.List.Ordered
+import Data.List (unfoldr, isPrefixOf, elemIndex)
+import Data.List.Split (splitWhen)
+import Data.Maybe (catMaybes, isNothing)
 
 -- main :: IO ()
 -- main = do
@@ -16,28 +14,29 @@ import Data.List.Ordered
 
     -- print $ run body delims
 
-streams :: String -> [String] -> [(String, [Int])]
-streams body delims = zip delims $ flip match body . build <$> delims
-
-lengthDecoratedStreams :: [(String, [Int])] -> [[(Int, Int)]]
-lengthDecoratedStreams = fmap (\ (delim, stream) -> zip stream (repeat $ length delim))
-
-mergeStreams :: [[(Int, Int)]] -> [(Int, Int)]
-mergeStreams streams = foldr merge [] streams
-
-stream delims = mergeStreams . lengthDecoratedStreams . flip streams delims
-
--- | This only works for finite body.
 splitOnSubstrs :: [String] -> String -> [String]
-splitOnSubstrs delims body = unfoldr f body
+splitOnSubstrs delims
+    = fmap catMaybes       -- At this point, there will be only `Just` elements left.
+    . splitWhen isNothing  -- Now we may split at nothings.
+    . unfoldr f            -- Replace the occurences of delimiters with a `Nothing`.
   where
+
+-- | This is the base case. It will terminate the `unfoldr` process.
     f [ ]  = Nothing
-    f body = case listToMaybe (stream delims body) of
-        Just (start, length) ->
-            let (word, rest) = splitAt start body
-                body' = drop length rest
-            in  return (word, body')
-        Nothing -> return (body, [ ])
+
+-- | This is the recursive case. It is divided into 2 cases:
+-- * One of the delimiters may match. We will then replace it with a Nothing.
+-- * Otherwise, we will `Just` return the current element.
+--
+-- Notice that, if there are several patterns that match at this point, we will use the first one.
+-- You may sort the patterns by length to always match the longest or the shortest. If you desire
+-- more complicated behaviour, you must plug a more involved logic here. In any way, the index
+-- should point to one of the patterns that matched.
+--
+--                       vvvvvvvvvvvvvv
+    f body@(x:xs) = case elemIndex True $ (`isPrefixOf` body) <$> delims of
+        Just index -> return (Nothing, drop (length $ delims !! index) body)
+        Nothing    -> return (Just x, xs)
 
 -- λ take 10 $ splitOnSubstrs ["||", "***"] "la||la***fa"
 -- ["la","la","fa"]
