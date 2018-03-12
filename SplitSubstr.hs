@@ -2,18 +2,18 @@ module SplitSubstr where
 
 -- stackoverflow.com/questions/49228467
 
-import System.Environment (getArgs)
-
 import Data.List (unfoldr, isPrefixOf, elemIndex)
 import Data.List.Split (splitWhen)
 import Data.Maybe (catMaybes, isNothing)
 
--- main :: IO ()
--- main = do
---     (body: delims) <- getArgs
-
-    -- print $ run body delims
-
+-- | Split a (possibly infinite) string at the occurrences of any of the given delimiters.
+--
+-- λ take 10 $ splitOnSubstrs ["||", "***"] "la||la***fa"
+-- ["la","la","fa"]
+--
+-- λ take 10 $ splitOnSubstrs ["||", "***"] (cycle "la||la***fa||")
+-- ["la","la","fa","la","la","fa","la","la","fa","la"]
+--
 splitOnSubstrs :: [String] -> String -> [String]
 splitOnSubstrs delims
     = fmap catMaybes       -- At this point, there will be only `Just` elements left.
@@ -37,13 +37,3 @@ splitOnSubstrs delims
     f body@(x:xs) = case elemIndex True $ (`isPrefixOf` body) <$> delims of
         Just index -> return (Nothing, drop (length $ delims !! index) body)
         Nothing    -> return (Just x, xs)
-
--- λ take 10 $ splitOnSubstrs ["||", "***"] "la||la***fa"
--- ["la","la","fa"]
-
-
-
--- run :: Eq a => String -> [String] -> [Int]
--- run body delims = filter (snd /= Nothing) $ zip ... listToMaybe . flip match body . build <$> delims
-
-
