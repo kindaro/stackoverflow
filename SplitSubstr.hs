@@ -27,6 +27,7 @@ mergeStreams streams = foldr merge [] streams
 
 stream delims = mergeStreams . lengthDecoratedStreams . flip streams delims
 
+-- | This only works for finite body.
 splitOnSubstrs :: [String] -> String -> [String]
 splitOnSubstrs delims body = unfoldr f body
   where
