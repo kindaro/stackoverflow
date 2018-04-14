@@ -5,6 +5,7 @@ module ParseError where
 import Data.Map (Map)
 import Data.List (sort)
 import qualified Data.Map as M
+import Control.Monad (forever)
 
 type Anagrams = Map String [String]
 
@@ -25,6 +26,6 @@ buildAnagrams = fmap (foldr f M.empty . lines ) . readFile
 
 lookupAnagrams :: Anagrams -> String -> [String]
 lookupAnagrams anagrams str =   
-    case M.Lookup(sort str) anagrams of
+    case M.lookup(sort str) anagrams of
         Nothing -> []
-        Just XS -> XS
+        Just xs -> xs
