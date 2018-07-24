@@ -5,6 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Collection where
+-- ^ https://stackoverflow.com/a/51503924
 
 import Data.Tagged
 
@@ -27,10 +28,8 @@ class Collected phantom
                             , Collection phantom ~ Tagged phantom [Int] )
                          => Int -> Maybe (Element phantom)
     inCollection element
-        | element `elem` unTagged collection = Just $ Tagged element
+        | element `elem` unTagged (collection @phantom) = Just $ Tagged element
         | otherwise = Nothing
-      where
-        collection = (collection :: Collection phantom)
 
 data Primes
 
