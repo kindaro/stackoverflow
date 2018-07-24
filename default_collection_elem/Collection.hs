@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE DefaultSignatures #-}
 
 module Collection where
 
@@ -21,6 +22,12 @@ class Collected phantom
     collection :: Collection phantom
 
     inCollection :: Int -> Maybe (Element phantom)
+    default inCollection :: ( Element phantom    ~ Tagged phantom  Int
+                            , Collection phantom ~ Tagged phantom [Int] )
+                         => Int -> Maybe (Element phantom)
+    inCollection element
+        | element `elem` unTagged collection = Just $ Tagged element
+        | otherwise = Nothing
 
 data Primes
 
@@ -30,11 +37,6 @@ instance Collected Primes
     type Collection Primes = Tagged Primes [Int]
 
     collection = Tagged [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
-
-    -- inCollection :: Int -> Maybe (Element Primes)
-    inCollection element
-        | element `elem` unTagged (collection @Primes) = Just $ Tagged element
-        | otherwise = Nothing
 
 -- ^
 -- λ inCollection @Primes 7
