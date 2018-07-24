@@ -2,6 +2,7 @@
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Collection where
 
@@ -28,6 +29,8 @@ class Collected phantom
     inCollection element
         | element `elem` unTagged collection = Just $ Tagged element
         | otherwise = Nothing
+      where
+        collection = (collection :: Collection phantom)
 
 data Primes
 
