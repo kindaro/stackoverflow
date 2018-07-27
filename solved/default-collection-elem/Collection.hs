@@ -3,6 +3,8 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | https://stackoverflow.com/a/51503924
 module Collection where
@@ -15,18 +17,23 @@ import Data.Tagged
 
 class Collected phantom
   where
+    type Carrier phantom
+
+    type Index phantom
+
     type Element phantom = r | r -> phantom
-    type Element phantom = Tagged phantom Int
+    type Element phantom = Tagged phantom (Carrier phantom)
 
     type Collection phantom = r | r -> phantom
-    type Collection phantom = Tagged phantom [Int]
+    type Collection phantom = Tagged phantom [Carrier phantom]
 
     collection :: Collection phantom
 
-    inCollection :: Int -> Maybe (Element phantom)
-    default inCollection :: ( Element phantom    ~ Tagged phantom  Int
-                            , Collection phantom ~ Tagged phantom [Int] )
-                         => Int -> Maybe (Element phantom)
+    inCollection :: Carrier phantom -> Maybe (Element phantom)
+    default inCollection :: ( Element phantom    ~ Tagged phantom  (Carrier phantom)
+                            , Collection phantom ~ Tagged phantom [Carrier phantom]
+                            , Eq (Carrier phantom) )
+                         => Carrier phantom -> Maybe (Element phantom)
     inCollection element
         | element `elem` unTagged (collection @phantom) = Just $ Tagged element
         | otherwise = Nothing
@@ -35,6 +42,8 @@ data Primes
 
 instance Collected Primes
   where
+    type Carrier Primes = Int
+    type Index Primes = Int
     type Element Primes = Tagged Primes Int
     type Collection Primes = Tagged Primes [Int]
 
