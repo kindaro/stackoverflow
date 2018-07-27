@@ -4,8 +4,8 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
+-- | https://stackoverflow.com/a/51503924
 module Collection where
--- ^ https://stackoverflow.com/a/51503924
 
 import Data.Tagged
 
