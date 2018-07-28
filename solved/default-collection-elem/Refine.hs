@@ -6,6 +6,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | https://stackoverflow.com/q/51513731
 module Refine where
@@ -18,6 +20,8 @@ data PredicateKind = Mono | Hetero
 type family Predicate (k :: PredicateKind) (i :: *) (r :: *) = t | t -> i r k
   where Predicate Mono   i i = i -> Bool
         Predicate Hetero i r = i -> Maybe r
+        -- TODO: List membership.
+        -- TODO: Open up and have a class. Or remove ~ from Ref instances.
 
 class MakePredicate p i r
   where predicate :: p -> i -> Maybe r
@@ -33,37 +37,30 @@ instance MakePredicate (i -> Maybe r) i r
 --   i = initial
 --   r = refined
 
-data Ref φ i r a = forall (p :: PredicateKind) . Ref (Predicate p i r -> a) | Not
+newtype Ref φ p a = Ref (p -> Maybe a)  -- I do want this to have a switch of PredicateKind.
 
-instance Functor (Ref φ i r)  -- TODO: Derive?
+instance a ~ (Predicate k i r) => Functor (Ref φ a)  -- TODO: Derive?
   where
-    fmap f (Ref c) = Ref $ \p -> f (c p)
-    fmap _ Not = Not
+    fmap f (Ref c) = Ref $ \p -> fmap f (c p)
 
-instance Applicative (Ref φ i r)
+instance a ~ (Predicate k i r) => Applicative (Ref φ a)
   where
-    pure x = Ref $ \_ -> x
-    (Ref f) <*> (Ref c) = Ref $ \p -> (f p) (c _)  -- TODO: Needs injective type family!
-    -- _ <*> Failure = Failure
-    -- Failure <*> _ = Failure
+    pure x = Ref $ \_ -> pure x
+    (Ref f) <*> (Ref c) = Ref $ \p -> f p <*> c p
 
--- instance Monad (M s)
+-- instance a ~ (Predicate k i r) => Monad (Ref φ a)
 --   where
---     (M x) >>= f = f x
---     Failure >>= _ = Failure
+--     (Ref c) >>= f = f c  -- If f gives not, I should give not.
+--     Not >>= _ = Not
 
--- verify :: (Collected phantom, Carrier phantom ~ Int, Element phantom ~ Tagged phantom Int)
---        => Carrier phantom -> M Int (C phantom (Carrier phantom))
--- verify x = maybe Failure _ $ collected y
---   where collected :: Carrier phantom -> Maybe (Element phantom)
---         collected = inCollection
---         y :: Carrier phantom
---         y = x
+refine :: MakePredicate (Predicate k i r) i r => i -> Ref φ (Predicate k i r) r
+refine x = Ref $ \p -> predicate p x
 
--- runM :: M s a -> a
--- runM (M x) = x
+runRef :: Predicate k i r -> Ref φ (Predicate k i r) a -> Maybe a
+runRef p (Ref f) = f p
 
--- λ runM (verify @Primes 3)
--- Tagged 3
-
+-- λ runRef even (pure 2)
+-- Just 2
+-- λ runRef even (pure 3)
+-- Nothing
 
