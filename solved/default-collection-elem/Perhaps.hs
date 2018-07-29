@@ -5,6 +5,9 @@ module Perhaps where
 
 import Control.Monad ((>=>))
 
+-- $setup
+-- λ import GHC.Natural
+
 data Perhaps i r a
   where
     Actually :: a -> Perhaps i r a
@@ -54,3 +57,22 @@ verify (Presumably x) = Sometimes x
 
 introduce :: i -> Perhaps i r r
 introduce = assume >=> verify
+
+example p x y = runPerhaps p $ do
+    x' <- introduce x
+    y' <- introduce y
+    return $ x' + y'
+
+-- |
+-- λ example (\x -> if even x then Just x else Nothing) 2 4
+-- Just 6
+-- λ example (\x -> if even x then Just x else Nothing) 2 3
+-- Nothing
+-- λ example (\x -> if x > 0 then Just x else Nothing) 2 3
+-- Just 5
+-- λ example (\x -> if x > 0 then Just x else Nothing) 2 0
+-- Nothing
+-- λ example (\x -> if x > 0 then (Just . fromInteger) x else Nothing) 2 3 :: Maybe Natural
+-- Just 5
+-- λ example (\x -> if x > 0 then (Just . fromInteger) x else Nothing) 2 (-1) :: Maybe Natural
+-- Nothing
