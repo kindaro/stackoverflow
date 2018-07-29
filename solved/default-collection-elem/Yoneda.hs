@@ -1,5 +1,4 @@
 {-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE Rank2Types #-}
 
 -- | https://stackoverflow.com/q/51577631
 module Yoneda where
