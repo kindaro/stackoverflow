@@ -12,12 +12,13 @@ data Perhaps i r a
 
 instance Functor (Perhaps i r)
   where
-    fmap f (Actually x) = Fmap f (Actually x)
+    fmap f x = Fmap f x
 
 runPerhaps :: (i -> Maybe r) -> Perhaps i r a -> Maybe a
-runPerhaps p (Fmap f (Actually x)) = runPerhaps p $ Actually (f x)
 runPerhaps _ (Actually x) = Just x
 runPerhaps p (Sometimes i) = p i
+runPerhaps _ Never = Nothing
+runPerhaps p (Fmap f x) = fmap f (runPerhaps p x)
 
 -- |
 -- λ runPerhaps undefined $ fmap show $ Actually 3
