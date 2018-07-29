@@ -3,6 +3,8 @@
 
 module Perhaps where
 
+import Control.Monad ((>=>))
+
 data Perhaps i r a
   where
     Actually :: a -> Perhaps i r a
@@ -41,3 +43,14 @@ runPerhaps p (Bind f x) = runPerhaps p =<< f <$> runPerhaps p x
 -- Just 2
 -- λ runPerhaps (\x -> if even x then Just x else Nothing) $ Sometimes 3
 -- Nothing
+
+data Presumably a = Presumably a deriving Show
+
+assume :: i -> Perhaps i r (Presumably i)
+assume = Actually . Presumably
+
+verify :: Presumably i -> Perhaps i r r
+verify (Presumably x) = Sometimes x
+
+introduce :: i -> Perhaps i r r
+introduce = assume >=> verify
