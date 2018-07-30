@@ -4,6 +4,7 @@
 module Perhaps where
 
 import Control.Monad ((>=>))
+import Data.Tagged
 
 -- $setup
 -- λ import GHC.Natural
@@ -11,7 +12,7 @@ import Control.Monad ((>=>))
 data Perhaps i r a
   where
     Actually :: a -> Perhaps i r a
-    Sometimes :: i -> Perhaps i r r  -- Waiting to be converted to r.
+    Possibly :: i -> (r -> a) -> Perhaps i r a
     Never :: Perhaps i r a
     Fmap :: (a' -> a) -> Perhaps i r a' -> Perhaps i r a
     Ap :: Perhaps i r (a' -> a) -> Perhaps i r a' -> Perhaps i r a
@@ -32,7 +33,7 @@ instance Monad (Perhaps i r)
 
 runPerhaps :: (i -> Maybe r) -> Perhaps i r a -> Maybe a
 runPerhaps _ (Actually x) = Just x
-runPerhaps p (Sometimes i) = p i
+runPerhaps p (Possibly i f) = fmap f $ p i
 runPerhaps _ Never = Nothing
 runPerhaps p (Fmap f x) = fmap f (runPerhaps p x)
 runPerhaps p (Ap f x) = runPerhaps p f <*> runPerhaps p x
@@ -42,25 +43,31 @@ runPerhaps p (Bind f x) = runPerhaps p =<< f <$> runPerhaps p x
 -- λ runPerhaps undefined $ fmap show $ Actually 3
 -- Just "3"
 --
--- λ runPerhaps (\x -> if even x then Just x else Nothing) $ Sometimes 2
+-- λ runPerhaps (\x -> if even x then Just x else Nothing) $ Possibly 2 id
 -- Just 2
--- λ runPerhaps (\x -> if even x then Just x else Nothing) $ Sometimes 3
+-- λ runPerhaps (\x -> if even x then Just x else Nothing) $ Possibly 3 id
 -- Nothing
 
-data Presumably a = Presumably a deriving Show
+type Refined i r a = Tagged (i, r) a
 
-assume :: i -> Perhaps i r (Presumably i)
-assume = Actually . Presumably
+attempt :: i -> Perhaps i r r
+attempt x = Possibly x id
 
-verify :: Presumably i -> Perhaps i r r
-verify (Presumably x) = Sometimes x
+refine :: i -> Perhaps i r (Refined i r i)
+refine x = Possibly x (const $ Tagged x)
 
-introduce :: i -> Perhaps i r r
-introduce = assume >=> verify
+release :: Refined i r a -> a
+release = untag
+
+apply :: Refined i r i -> Perhaps i r r
+apply (Tagged x) = Possibly x id
+
+obtain :: i -> Perhaps i r i
+obtain = fmap release . refine
 
 example p x y = runPerhaps p $ do
-    x' <- introduce x
-    y' <- introduce y
+    x' <- attempt x
+    y' <- attempt y
     return $ x' + y'
 
 -- |
