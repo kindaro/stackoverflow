@@ -5,31 +5,19 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE KindSignatures #-}
 
 module Tappend where
 
-import Data.Monoid
-import GHC.TypeNats
-import Data.Vector.Sized
-
--- $setup
--- λ :set -XTypeApplications
-
-class Apfend a b c
+type family F (ts :: [*]) a
   where
-    apfend :: a -> b -> c
+    F '[ ] a = a
+    F (t ': ts) a = t -> F ts a
 
-instance Monoid m => Apfend (a -> m) (b -> m) (a -> b -> m)
-  where
-    apfend f g = \x y -> f x `mappend` g y
+(...) :: F '[b] c -> F '[a] b -> F '[a] c
+(...) f g = f . g
 
-instance Apfend a b c => Apfend (d -> a) b (d -> c)
-  where
-    apfend f g = \x -> f x `apfend` g
+-- |
+-- λ show ... (+2) $ 3
+-- "5"
 
--- ^
--- λ apfend (\x y -> show @Int x <> show @Int y) (show @Char) (1 :: Int) (2 :: Int) 'a'  :: String
--- ...
--- ...error...
--- ...Overlapping instances...
--- ...
