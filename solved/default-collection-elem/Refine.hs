@@ -8,6 +8,7 @@
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GADTs #-}
 
 -- | https://stackoverflow.com/q/51513731
 module Refine where
@@ -49,16 +50,25 @@ instance Eq i => Partial [i] i i
 --   i = initial
 --   r = refined
 
-data Ref φ p a = Ref Bool (p -> Maybe a)  -- I do want this to have a switch of PredicateKind.
-
-instance a ~ (Predicate k i r) => Functor (Ref φ a)  -- TODO: Derive?
+data Ref φ i r a
   where
-    fmap f (Ref b c) = Ref b $ \p -> fmap f (c p)
+    Actually ::  a                                    -> Ref φ i r a
+    Possibly ::  i -> (r -> a)                        -> Ref φ i r a
+    Never    ::                                          Ref φ i r a
 
-instance a ~ (Predicate k i r) => Applicative (Ref φ a)
-  where
-    pure x = Ref True $ \_ -> pure x
-    (Ref b f) <*> (Ref b' c) = Ref (b && b') $ \p -> f p <*> c p
+    Fmap     ::            (a' -> a) -> Ref φ i r a'  -> Ref φ i r a
+    Ap       ::  Ref φ i r (a' -> a) -> Ref φ i r a'  -> Ref φ i r a
+    Bind     ::  (a' -> Ref φ i r a) -> Ref φ i r a'  -> Ref φ i r a
+
+instance Functor (Ref φ i r)
+  where fmap f x = Fmap f x
+
+instance Applicative (Ref φ i r)
+  where pure x = Actually x
+        f <*> x = Ap f x
+
+instance Monad (Ref φ i r)
+  where x >>= f = Bind f x
 
 -- instance a ~ (Predicate k i r) => Monad (Ref φ a)
 --   where
