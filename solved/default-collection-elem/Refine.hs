@@ -18,36 +18,30 @@ import Data.Tagged
 -- $setup
 -- λ :set -XFlexibleContexts
 
-data PredicateKind = Mono | Hetero
+-- | Various ways to obtain a partial function.
 
-type family Predicate (k :: PredicateKind) (i :: *) (r :: *) = t | t -> i r k
-  where Predicate Mono   i i = i -> Bool
-        Predicate Hetero i r = i -> Maybe r
-        -- TODO: List membership.
-        -- TODO: Open up and have a class. Or remove ~ from Ref instances.
+class Partial p i r
+  where partial :: p -> i -> Maybe r
 
-class MakePredicate p i r
-  where predicate :: p -> i -> Maybe r
-
-instance MakePredicate (i -> Bool) i i
-  where predicate p x | p x = Just x | otherwise = Nothing
+instance Partial (i -> Bool) i i
+  where partial p x | p x = Just x | otherwise = Nothing
 
 -- ^
--- λ predicate even 2 :: Maybe Integer
+-- λ partial even 2 :: Maybe Integer
 -- Just 2
--- λ predicate even 3 :: Maybe Integer
+-- λ partial even 3 :: Maybe Integer
 -- Nothing
 
-instance MakePredicate (i -> Maybe r) i r
-  where predicate p x = p x
+instance Partial (i -> Maybe r) i r
+  where partial p x = p x
 
-instance Eq i => MakePredicate [i] i i
-  where predicate p x | x `elem` p = Just x | otherwise = Nothing
+instance Eq i => Partial [i] i i
+  where partial p x | x `elem` p = Just x | otherwise = Nothing
 
 -- ^
--- λ predicate [2,3] 2 :: Maybe Integer
+-- λ partial [2,3] 2 :: Maybe Integer
 -- Just 2
--- λ predicate [2,3] 4 :: Maybe Integer
+-- λ partial [2,3] 4 :: Maybe Integer
 -- Nothing
 
 -- |
