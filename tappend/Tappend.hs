@@ -23,6 +23,13 @@ instance Monoid m => Apfend (a -> m) (b -> m) (a -> b -> m)
   where
     apfend f g = \x y -> f x `mappend` g y
 
+instance Apfend a b c => Apfend (d -> a) b (d -> c)
+  where
+    apfend f g = \x -> f x `apfend` g
+
 -- ^
--- λ apfend (show @Int) (show @Char) (1 :: Int) 'a'  :: String
--- "1'a'"
+-- λ apfend (\x y -> show @Int x <> show @Int y) (show @Char) (1 :: Int) (2 :: Int) 'a'  :: String
+-- ...
+-- ...error...
+-- ...Overlapping instances...
+-- ...
