@@ -1,0 +1,8 @@
+dependencies:
+    - vector-sized
+    - base
+
+library:
+    exposed-modules:
+        Tappend
+        KindInInstance
