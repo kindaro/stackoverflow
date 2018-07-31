@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE DataKinds #-}
@@ -14,7 +15,7 @@ type family (ts :: [*]) ++ (ts' :: [*])
     '[ ] ++ ts = ts
     (t ': ts) ++ ts' = t ': ts ++ ts'
 
-type family F (ts :: [*]) a
+type family F (ts :: [*]) a = r | r a -> ts
   where
     F '[ ] a = a
     F (t ': ts) a = t -> F ts a
