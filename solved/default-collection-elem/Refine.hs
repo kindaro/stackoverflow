@@ -37,16 +37,16 @@ instance MakePredicate (i -> Maybe r) i r
 --   i = initial
 --   r = refined
 
-newtype Ref φ p a = Ref (p -> Maybe a)  -- I do want this to have a switch of PredicateKind.
+data Ref φ p a = Ref Bool (p -> Maybe a)  -- I do want this to have a switch of PredicateKind.
 
 instance a ~ (Predicate k i r) => Functor (Ref φ a)  -- TODO: Derive?
   where
-    fmap f (Ref c) = Ref $ \p -> fmap f (c p)
+    fmap f (Ref b c) = Ref b $ \p -> fmap f (c p)
 
 instance a ~ (Predicate k i r) => Applicative (Ref φ a)
   where
-    pure x = Ref $ \_ -> pure x
-    (Ref f) <*> (Ref c) = Ref $ \p -> f p <*> c p
+    pure x = Ref True $ \_ -> pure x
+    (Ref b f) <*> (Ref b' c) = Ref (b && b') $ \p -> f p <*> c p
 
 -- instance a ~ (Predicate k i r) => Monad (Ref φ a)
 --   where
@@ -54,10 +54,10 @@ instance a ~ (Predicate k i r) => Applicative (Ref φ a)
 --     Not >>= _ = Not
 
 refine :: MakePredicate (Predicate k i r) i r => i -> Ref φ (Predicate k i r) r
-refine x = Ref $ \p -> predicate p x
+refine x = Ref True $ \p -> predicate p x
 
 runRef :: Predicate k i r -> Ref φ (Predicate k i r) a -> Maybe a
-runRef p (Ref f) = f p
+runRef p (Ref b f) = f p
 
 -- λ runRef even (pure 2)
 -- Just 2
