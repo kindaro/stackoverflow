@@ -15,6 +15,9 @@ module Refine where
 import Collection
 import Data.Tagged
 
+-- $setup
+-- λ :set -XFlexibleContexts
+
 data PredicateKind = Mono | Hetero
 
 type family Predicate (k :: PredicateKind) (i :: *) (r :: *) = t | t -> i r k
@@ -29,11 +32,23 @@ class MakePredicate p i r
 instance MakePredicate (i -> Bool) i i
   where predicate p x | p x = Just x | otherwise = Nothing
 
+-- ^
+-- λ predicate even 2 :: Maybe Integer
+-- Just 2
+-- λ predicate even 3 :: Maybe Integer
+-- Nothing
+
 instance MakePredicate (i -> Maybe r) i r
   where predicate p x = p x
 
 instance Eq i => MakePredicate [i] i i
   where predicate p x | x `elem` p = Just x | otherwise = Nothing
+
+-- ^
+-- λ predicate [2,3] 2 :: Maybe Integer
+-- Just 2
+-- λ predicate [2,3] 4 :: Maybe Integer
+-- Nothing
 
 -- |
 --   φ = phantom
