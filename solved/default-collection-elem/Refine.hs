@@ -32,6 +32,9 @@ instance MakePredicate (i -> Bool) i i
 instance MakePredicate (i -> Maybe r) i r
   where predicate p x = p x
 
+instance Eq i => MakePredicate [i] i i
+  where predicate p x | x `elem` p = Just x | otherwise = Nothing
+
 -- |
 --   φ = phantom
 --   i = initial
