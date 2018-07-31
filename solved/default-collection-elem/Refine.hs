@@ -18,6 +18,7 @@ import Data.Tagged
 
 -- $setup
 -- λ :set -XFlexibleContexts
+-- λ :set -XTypeApplications
 
 -- | Various ways to obtain a partial function.
 
@@ -70,19 +71,35 @@ instance Applicative (Ref φ i r)
 instance Monad (Ref φ i r)
   where x >>= f = Bind f x
 
--- instance a ~ (Predicate k i r) => Monad (Ref φ a)
---   where
---     (Ref c) >>= f = f c  -- If f gives not, I should give not.
---     Not >>= _ = Not
+runRef :: Partial p i r => p -> Ref φ i r a -> Maybe a
 
-refine :: MakePredicate (Predicate k i r) i r => i -> Ref φ (Predicate k i r) r
-refine x = Ref True $ \p -> predicate p x
+runRef _ (Actually x) = Just x
+runRef p (Possibly i f) = fmap f $ partial p i
+runRef _ Never = Nothing
 
-runRef :: Predicate k i r -> Ref φ (Predicate k i r) a -> Maybe a
-runRef p (Ref b f) = f p
+runRef p (Fmap f x) = fmap f (runRef p x)
+runRef p (Ap f x) = runRef p f <*> runRef p x
+runRef p (Bind f x) = runRef p =<< f <$> runRef p x
 
--- λ runRef even (pure 2)
+type Refined i r a = Tagged (i, r) a
+
+attempt :: i -> Ref φ i r r
+attempt x = Possibly x id
+
+refine :: i -> Ref φ i r (Refined i r i)
+refine x = Possibly x (const $ Tagged x)
+
+release :: Refined i r a -> a
+release = untag
+
+apply :: Refined i r i -> Ref φ i r r
+apply (Tagged x) = Possibly x id
+
+obtain :: i -> Ref φ i r i
+obtain = fmap release . refine
+
+-- |
+-- λ runRef (even @Int) $ (obtain 2 :: Ref φ Int Int Int)
 -- Just 2
--- λ runRef even (pure 3)
+-- λ runRef (even @Int) $ (obtain 3 :: Ref φ Int Int Int)
 -- Nothing
-
