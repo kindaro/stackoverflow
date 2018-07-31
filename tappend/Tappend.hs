@@ -9,15 +9,15 @@
 
 module Tappend where
 
+type family Concat (ts :: [*]) (ts' :: [*])
+  where
+    Concat '[ ] ts = ts
+    Concat (t ': ts) ts' = t ': Concat ts ts'
+
 type family F (ts :: [*]) a
   where
     F '[ ] a = a
     F (t ': ts) a = t -> F ts a
 
-(...) :: F '[b] c -> F '[a] b -> F '[a] c
-(...) f g = f . g
-
--- |
--- λ show ... (+2) $ 3
--- "5"
-
+(...) :: F ts m -> F ts' m -> F (Concat ts ts') m
+(...) f g = undefined
