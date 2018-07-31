@@ -1,0 +1,14 @@
+
+library:
+    exposed-modules:
+        - Collection
+        - Refine
+        - Inescapable
+        - Perhaps
+        - Yoneda
+    dependencies:
+        - base < 5
+        - tagged
+
+    default-extensions:
+        - EmptyDataDecls
