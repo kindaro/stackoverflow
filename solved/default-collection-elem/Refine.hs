@@ -2,6 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ExistentialQuantification #-}
@@ -9,6 +10,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE DefaultSignatures #-}
 
 -- | https://stackoverflow.com/q/51513731
 module Refine where
@@ -16,17 +18,23 @@ module Refine where
 import Collection
 import Data.Tagged
 
+import Data.Maybe (isJust)
+
 -- $setup
 -- λ :set -XFlexibleContexts
 -- λ :set -XTypeApplications
 
 -- | Various ways to obtain a partial function.
 
-class Partial p i r
+class Partial p i r | p -> i r
   where partial :: p -> i -> Maybe r
+        default partial :: r ~ i => p -> i -> Maybe r
+        partial p x | predicate p x = Just x | otherwise = Nothing
+        predicate :: p -> i -> Bool
+        predicate p x = isJust $ (partial :: p -> i -> Maybe r) p x
 
 instance Partial (i -> Bool) i i
-  where partial p x | p x = Just x | otherwise = Nothing
+  where predicate p = p
 
 -- ^
 -- λ partial even 2 :: Maybe Integer
@@ -35,10 +43,10 @@ instance Partial (i -> Bool) i i
 -- Nothing
 
 instance Partial (i -> Maybe r) i r
-  where partial p x = p x
+  where partial p = p
 
 instance Eq i => Partial [i] i i
-  where partial p x | x `elem` p = Just x | otherwise = Nothing
+  where predicate p x = x `elem` p
 
 -- ^
 -- λ partial [2,3] 2 :: Maybe Integer
