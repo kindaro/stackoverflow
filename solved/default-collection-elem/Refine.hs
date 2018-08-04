@@ -118,3 +118,21 @@ obtain = fmap release . refine
 -- Just 2
 -- λ runRef even $ obtain 3
 -- Nothing
+
+nextIndex, prevIndex :: forall φ i r. (Eq i, Enum i, Bounded i)
+                     => Index φ i r -> Ref φ i r (Index φ i r)
+
+nextIndex i = nextIndex' (release i)
+  where
+    nextIndex' :: i -> Ref φ i r (Index φ i r)
+    nextIndex' x = let x' = if x == maxBound then minBound else succ x  -- Next in the cycle.
+                   in  isIndex x' >>= \b -> if b then refine x' else nextIndex' x'
+
+-- |
+-- λ runRef even $ refine @Int 10 >>= nextIndex >>= return . release
+-- Just 12
+
+prevIndex = undefined
+
+indices :: Index φ i r -> Ref φ i r [Index φ i r]
+indices (Index i) = undefined
