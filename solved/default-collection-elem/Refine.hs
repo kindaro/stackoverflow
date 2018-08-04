@@ -53,7 +53,7 @@ instance Eq i => Partial [i] i i
 
 -- |
 --   φ = phantom
---   i = initial
+--   i = initial / index
 --   r = refined
 
 data Ref φ i r a
@@ -96,18 +96,18 @@ runRef p (Check x) = Just $ predicate p x
 -- λ runRef even $ isIndex 3
 -- Just False
 
-newtype Index φ i r a = Index { release :: a }
+newtype Index φ i r = Index { release :: i }
 
 attempt :: i -> Ref φ i r r
 attempt x = Possibly x id
 
-refine :: i -> Ref φ i r (Index φ i r i)
+refine :: i -> Ref φ i r (Index φ i r)
 refine x = Possibly x (const $ Index x)
 
 isIndex :: i -> Ref φ i r Bool
 isIndex = Check
 
-apply :: Index φ i r i -> Ref φ i r r
+apply :: Index φ i r -> Ref φ i r r
 apply (Index x) = Possibly x id
 
 obtain :: i -> Ref φ i r i
