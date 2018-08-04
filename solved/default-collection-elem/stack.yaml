@@ -1,5 +1,1 @@
-# resolver: lts-11.6
-resolver: lts-12.2
-
-extra-deps:
-    - /home/kindaro/code/haskell/algebra
+resolver: lts-12.4
