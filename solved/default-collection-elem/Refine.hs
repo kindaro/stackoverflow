@@ -15,9 +15,6 @@
 -- | https://stackoverflow.com/q/51513731
 module Refine where
 
-import Collection
-import Data.Tagged
-
 import Data.Maybe (isJust)
 
 -- $setup
@@ -89,19 +86,17 @@ runRef p (Fmap f x) = fmap f (runRef p x)
 runRef p (Ap f x) = runRef p f <*> runRef p x
 runRef p (Bind f x) = runRef p =<< f <$> runRef p x
 
-type Refined i r a = Tagged (i, r) a
+newtype Index φ i r a = Index { release :: a }
 
 attempt :: i -> Ref φ i r r
 attempt x = Possibly x id
 
-refine :: i -> Ref φ i r (Refined i r i)
-refine x = Possibly x (const $ Tagged x)
+refine :: i -> Ref φ i r (Index φ i r i)
+refine x = Possibly x (const $ Index x)
 
-release :: Refined i r a -> a
-release = untag
 
-apply :: Refined i r i -> Ref φ i r r
-apply (Tagged x) = Possibly x id
+apply :: Index φ i r i -> Ref φ i r r
+apply (Index x) = Possibly x id
 
 obtain :: i -> Ref φ i r i
 obtain = fmap release . refine
