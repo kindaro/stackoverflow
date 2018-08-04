@@ -66,6 +66,8 @@ data Ref φ i r a
     Ap       ::  Ref φ i r (a' -> a) -> Ref φ i r a'  -> Ref φ i r a
     Bind     ::  (a' -> Ref φ i r a) -> Ref φ i r a'  -> Ref φ i r a
 
+    Check    ::  i -> Ref φ i r Bool
+
 instance Functor (Ref φ i r)
   where fmap f x = Fmap f x
 
@@ -86,6 +88,14 @@ runRef p (Fmap f x) = fmap f (runRef p x)
 runRef p (Ap f x) = runRef p f <*> runRef p x
 runRef p (Bind f x) = runRef p =<< f <$> runRef p x
 
+runRef p (Check x) = Just $ predicate p x
+-- ^ Obtain knowledge of validity of a given index without ruining the entire computation.
+--
+-- λ runRef even $ isIndex 2
+-- Just True
+-- λ runRef even $ isIndex 3
+-- Just False
+
 newtype Index φ i r a = Index { release :: a }
 
 attempt :: i -> Ref φ i r r
@@ -94,6 +104,8 @@ attempt x = Possibly x id
 refine :: i -> Ref φ i r (Index φ i r i)
 refine x = Possibly x (const $ Index x)
 
+isIndex :: i -> Ref φ i r Bool
+isIndex = Check
 
 apply :: Index φ i r i -> Ref φ i r r
 apply (Index x) = Possibly x id
