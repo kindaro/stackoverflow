@@ -107,7 +107,7 @@ obtain :: i -> Ref φ i r i
 obtain = fmap release . refine
 
 -- |
--- λ runRef (even @Int) $ (obtain 2 :: Ref φ Int Int Int)
+-- λ runRef even $ obtain 2
 -- Just 2
--- λ runRef (even @Int) $ (obtain 3 :: Ref φ Int Int Int)
+-- λ runRef even $ obtain 3
 -- Nothing
